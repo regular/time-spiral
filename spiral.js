@@ -11,8 +11,7 @@ function pStr (point) {
 }
 
 function getPath(args) {
-  const {x, y, startRadius, spacePerLoop, startTheta, endTheta, thetaStep} = args
-  const center = {x, y}
+  const {startRadius, spacePerLoop, startTheta, endTheta, thetaStep} = args
   // Rename spiral parameters for the formula r = a + bθ
   const a = startRadius;  // start distance from center
   const b = spacePerLoop / Math.PI / 2; // space between each loop
@@ -27,8 +26,8 @@ function getPath(args) {
   // start and end points
   const oldPoint = {x: 0, y: 0};
   const newPoint = {
-    x: center.x + newR * Math.cos(newTheta), 
-    y: center.y + newR * Math.sin(newTheta)
+    x: newR * Math.cos(newTheta), 
+    y: newR * Math.sin(newTheta)
   };
 
   // slopes of tangents
@@ -38,17 +37,20 @@ function getPath(args) {
 
   let path = "M " + pStr(newPoint);
 
-  while (oldTheta < endTheta - thetaStep) {
+  let i = 1
+  while (newTheta < endTheta) {
     oldTheta = newTheta;
-    newTheta += thetaStep;
+
+    newTheta = Math.min(startTheta +  i * thetaStep, endTheta)
+    i++
 
     oldR = newR;
     newR = a + b * newTheta;
 
     oldPoint.x = newPoint.x;
     oldPoint.y = newPoint.y;
-    newPoint.x = center.x + newR * Math.cos(newTheta);
-    newPoint.y = center.y + newR * Math.sin(newTheta);
+    newPoint.x = newR * Math.cos(newTheta);
+    newPoint.y = newR * Math.sin(newTheta);
 
     // Slope calculation with the formula:
     // (b * sinΘ + (a + bΘ) * cosΘ) / (b * cosΘ - (a + bΘ) * sinΘ)
@@ -62,10 +64,6 @@ function getPath(args) {
     const newIntercept = -(newSlope * newR* Math.cos(newTheta) - newR * Math.sin(newTheta));
 
     const controlPoint = lineIntersection(oldSlope, oldIntercept, newSlope, newIntercept);
-
-    // Offset the control point by the center offset.
-    controlPoint.x += center.x;
-    controlPoint.y += center.y;
 
     path += "Q " + pStr(controlPoint) + pStr(newPoint);
   }
