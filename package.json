@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/regular/time-spiral#readme",
   "dependencies": {
+    "module-styles": "^1.0.0",
     "mutant": "^3.29.0"
   }
 }
