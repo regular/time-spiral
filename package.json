@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/regular/time-spiral/issues"
   },
-  "homepage": "https://github.com/regular/time-spiral#readme"
+  "homepage": "https://github.com/regular/time-spiral#readme",
+  "dependencies": {
+    "mutant": "^3.29.0"
+  }
 }
