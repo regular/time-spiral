@@ -18,7 +18,34 @@
   },
   "homepage": "https://github.com/regular/time-spiral#readme",
   "dependencies": {
+    "collect-mutations": "^1.0.6",
     "module-styles": "^1.0.0",
-    "mutant": "^3.29.0"
+    "mutant": "^3.29.0",
+    "obv": "0.0.1",
+    "pull-defer": "^0.2.3",
+    "pull-stream": "^3.6.14",
+    "tre-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "brfs": "^2.0.2",
+    "bricons": "^1.2.0",
+    "browserify-swap": "^0.2.2",
+    "sodium-browserify-tweetnacl": "^0.2.6"
+  },
+  "browserify": {
+    "transform": [
+      "brfs",
+      "bricons",
+      "browserify-swap"
+    ]
+  },
+  "browserify-swap": {
+    "@packages": [
+      "chloride"
+    ],
+    "dev": {
+      ".*node_modules/chloride/index.js$": "sodium-browserify-tweetnacl",
+      ".*node_modules/chloride/browser.js$": "sodium-browserify-tweetnacl"
+    }
   }
 }

@@ -1,80 +1,84 @@
-const s = require('mutant/svg-element')
+const {client} = require('tre-client')
+const Projects = require('./projects')
 const h = require('mutant/html-element')
-const computed = require('mutant/computed')
 const Value = require('mutant/value')
-const MutantArray = require('mutant/array')
-const MutantMap = require('mutant/map')
-const spiral = require('./spiral')
-const styles = require('module-styles')('time-spiral')
+const computed = require('mutant/computed')
+const styles = require('module-styles')('tspl-main')
 
-const t = Value(0)
+const renderGraph = require('./graph')
 
-setInterval(()=>{
-  t.set(t()+1)
-}, 100)
-
-function clock() {
-  return h('.clock', computed(t, t=>{
-    return `${Math.floor(t/60)}:${t%60}`
-  }))
-}
-
-function spiralSegment(startT, endT) {
-  return s('g.spiral-segment', {
-    transform: computed(t, t=> `scale(-1 1) rotate(-${t * 6})`)
-  }, [
-    s('path', {
-      d: computed(t, t => spiral({
-        startRadius: 300,
-        spacePerLoop: -30,
-        startTheta:rad(-90 + (startT + t) * 6),
-        endTheta: rad(-90 + (endT + t) * 6),
-        thetaStep: rad(30)
-      })),
-      fill: 'none',
-      stroke: '#aaa',
-      'stroke-width': 20,
-      'stroke-linecap': 'round'
-    })
-  ])
-}
-
-document.body.appendChild(
-  h('.time-spiral', [
-    clock(),
-    s('svg', {
-      width: 400,
-      height: 400,
-      viewBox: "-400 -400 800 800"
-    }, [
-      s('g', {
-        
-      }, [
-        spiralSegment(0, 60),
-        spiralSegment(120, 120 + 45),
-        //spiralSegment(40, 55),
-        s('line.minute-hand', {
-          x1: 0, 
-          y1: 0,
-          x2: 0,
-          y2: -400,
-          'stroke-width': 10,
-          stroke: 'black',
-          transform: computed(t, t=> `rotate(${t * 6})`)
-        })
-      ])
-    ])
-  ])
-)
-
-function rad(x) {
-  return x * Math.PI / 180
-}
+client((err, ssb, config) =>{
+  const feedId = Value()
+  ssb.whoami(ssb, (err, feed) =>{
+    if (err) console.log(err)
+    feedId.set(feed.id)
+  })
+  const {renderList, renderAddButton} = Projects(ssb)
+  document.body.appendChild(h('.tspl-main', [
+    h('.hspl-sidebar', [
+      computed(feedId, feedId => feedId ? renderList(feedId) : h('.spinner', 'spinner')),
+      renderAddButton(),
+    ]),
+    renderGraph()
+  ]))
+})
 
 styles(`
-.clock {
-  font-family: monospace;
-  font-size: 56pt;
-  color: #aaa;
+html, html * {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+body {
+  color: #999;
+  font-family: sans-serif;
+  -webkit-text-stroke-color: #666;
+}
+
+input {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  padding: .2em;
+  border-radius: .1em;
+}
+
+button:hover {
+  color: #333;
+  -webkit-text-stroke-color: #222;
+  background: #aaa;
+}
+.tspl-main {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+}
+.tspl-main button.add {
+  height: 1em;
+}
+.tspl-main button.add:before {
+  content: "add project";
+}
+.tspl-main .project-list {
+  font-size: 28pt;
+  display: grid;
+  grid-template-columns: 1.4em minmax(2em, 1fr) 1.4em 1.4em;
+  border-bottom: 1px solid #888;
+  margin-bottom: 1px;
+}
+.tspl-main .project-list button.flag,
+.tspl-main .project-list button.settings {
+  font-family: "iconfont";
+}
+.tspl-main .project-list button.flag:not(.flagged) {
+  -webkit-text-stroke-width: 1.2px;
+  color: transparent;
 }
 `)
