@@ -1,3 +1,4 @@
+const fs = require('fs')
 const {client} = require('tre-client')
 const Projects = require('./projects')
 const h = require('mutant/html-element')
@@ -6,6 +7,7 @@ const computed = require('mutant/computed')
 const styles = require('module-styles')('tspl-main')
 
 const renderGraph = require('./graph')
+const renderPalette = require('./render-palette')
 
 client((err, ssb, config) =>{
   const feedId = Value()
@@ -19,7 +21,8 @@ client((err, ssb, config) =>{
       computed(feedId, feedId => feedId ? renderList(feedId) : h('.spinner', 'spinner')),
       renderAddButton(),
     ]),
-    renderGraph()
+    renderGraph(),
+    renderPalette(JSON.parse(fs.readFileSync('palettes/f94144-f3722c-f8961e-f9c74f-90be6d-43aa8b-577590.json')))
   ]))
 })
 
