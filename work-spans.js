@@ -70,7 +70,7 @@ function addSpan(ssb, project, cb) {
     ssb.publish({
       type: 'work-span',
       project,
-      startTime: Math.floor(now / 1000 - 15 * 60),
+      startTime: Math.floor(now / 1000 - 4 * 60 * 60),
       endTime: Math.floor(now / 1000)
     }, cb)
   })
