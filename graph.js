@@ -6,14 +6,20 @@ const MutantArray = require('mutant/array')
 const MutantMap = require('mutant/map')
 const spiral = require('./spiral')
 const styles = require('module-styles')('time-spiral')
+const debug = require('debug')('tspl:graph')
 
 const t = Value(0)
 
-setInterval(()=>{
-  t.set(t()+1)
-}, 100)
+function setTime() {
+  //t.set(t()+1)
+  const d = new Date()
+  t.set( d.getHours() * 60 + d.getMinutes())
+}
+setInterval(setTime, 60000)
+//setInterval(setTime, 100)
+setTime()
 
-module.exports = function() {
+module.exports = function(spans) {
   return h('.time-spiral', [
     clock(),
     s('svg', {
@@ -24,9 +30,7 @@ module.exports = function() {
       s('g', {
         
       }, [
-        spiralSegment(0, 60),
-        spiralSegment(120, 120 + 45),
-        //spiralSegment(40, 55),
+        MutantMap(spans, renderSpan),
         s('line.minute-hand', {
           x1: 0, 
           y1: 0,
@@ -39,6 +43,22 @@ module.exports = function() {
       ])
     ])
   ])
+}
+
+function renderSpan(spanObs) {
+  return computed([spanObs], kv =>{
+    if (!kv) return []
+    const {value} = kv
+    const {content} = value
+    const {startTime, endTime, project} = content
+    
+    const currMinute = Date.now() / 1000 / 60
+    const endMinutesAgo = currMinute - (endTime / 60)
+    const startMinutesAgo = currMinute - (startTime / 60)
+    debug('render %d min ago to %d min ago', startMinutesAgo, endMinutesAgo)
+   return spiralSegment(endMinutesAgo - t(), startMinutesAgo - t())
+   //return spiralSegment(0-t(), 30-t()) // from now to 30 min in the past
+  })
 }
 
 function clock() {

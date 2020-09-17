@@ -3,29 +3,15 @@ const MutantArray = require('mutant/array')
 const MutantMap = require('mutant/map')
 const computed = require('mutant/computed')
 const Value = require('mutant/value')
-const collect = require('collect-mutations')
 const pull = require('pull-stream')
-const defer = require('pull-defer')
-const Obv = require('obv')
-const debug = require('debug')('tspl:projects')
-const input = require('./input')
+const debug = require('debug')('tspl:work-spans')
+const WorkSpanSource = require('./work-span-source')
+const dayjs = require('dayjs').extend(require('dayjs/plugin/localizedFormat'))
 const revisionRoot = require('./util/revision-root')
 
-const bricons = require('bricons')
-const addFont = require('./add-font')
-
-const font= bricons.font({
-  fontName: 'iconfont',
-  glyphs: {
-    'F': 'ionicons/heart',
-    'G': 'ionicons/settings'
-  }
-})
-addFont(font)
-
 module.exports = function(ssb) {
-  const source = Source(ssb)
-  return {renderAddButton, renderList}
+  const source = WorkSpanSource(ssb)
+  return {renderAddSpanButton, renderSpanList}
 
   function patch(kv, newContent, cb) {
     const revRoot = kv.value.content.revisionRoot || kv.key
@@ -39,89 +25,53 @@ module.exports = function(ssb) {
     })
   }
 
-
-  function renderAddButton() {
-    return h('button.add.project', {
-      'ev-click': ev => addProject(ssb, (err, kv) => {
+  function renderAddSpanButton(projectObs) {
+    return h('button.add.span', {
+      'ev-click': ev => addSpan(ssb, revisionRoot(projectObs()), (err, kv) => {
         if (err) return console.error(err.message)
-        console.log('added project %o', kv)
+        debug('added span %o', kv)
       })
     })
   }
 
-  function renderList(feedId, opts) {
+  function renderSpanList(feedId, projectId, opts) {
     opts = opts || {}
-    const selectedProject = opts.selectedProject || Value()
-    const projects = MutantArray()
+    const spans = MutantArray()
     const o = {sync: true, live: true}
-    let drain
-    pull(
-      source(feedId, o),
-      pull.through( kvv=>debug('source %o', kvv)),
-      drain = collect(projects, o, err =>{
-        console.error(err.message)
-      })
-    )
+    const abort = source(spans, projectId, feedId)
 
-    const sortedProjects = computed(projects, projects =>{
-      return projects.sort(compareProjects)
-    })
-
-    return h('.project-list.list', {
-      hooks: [el=>el=>drain.abort()], // abort pull stream when element is removed from dom
-    }, MutantMap(sortedProjects, kvObs => {
-      return computed(kvObs, kv => renderProject(kv))
+    return h('.work-span-list.list', {
+      hooks: [el=>el=>abort()], // abort pull stream when element is removed from dom
+    }, MutantMap(spans, kvObs => {
+      return computed(kvObs, kv => renderSpan(kv))
     }))
-    function renderProject(kv) {
+
+    function renderSpan(kv) {
       debug('render %o', kv)
       if (!kv) return []
       const {content} = kv.value
-      const {name, flagged, symbol} = content
+      const {startTime, endTime} = content
       return [
-        h('.symbol', 'A'),
-        input(name, {
-          classList: computed(selectedProject, sel =>{
-            if (!sel) return []
-            if (revisionRoot(sel) == revisionRoot(kv)) return ['selected']
-            return []
-          }),
-          prompt: 'enter a name',
-          placeholder: 'no name',
-          onSave: name => {
-            patch(kv, {name}, (err, kv) =>{
-              if (err) return console.error(err.message)
-              debug('changed name: %o', kv)
-            })
-          }
-        }),
-        h(`button.flag${flagged == true ? '.flagged' : ''}`, {
-          'ev-click': ev=>{
-            patch(kv, {flagged: !flagged}, (err, kv) =>{
-              if (err) return console.error(err.message)
-              debug('changed flag: %o', kv)
-            })
-          }
-        }, 'F'),
-        h('button.settings', {
-          'ev-click': ev=>{
-            selectedProject.set(kv)
-          }
-        }, 'G')
-
+        h('.time', formatTime(startTime)),
+        h('.time', formatTime(endTime))
       ]
     }
   }
 }
 
-function addProject(ssb, cb) {
+function formatTime(t) {
+  return dayjs(t * 1000).format('ll LT')
+}
+
+function addSpan(ssb, project, cb) {
   ssb.whoami( (err, feed) =>{
     if (err) return cb(err)
+    const now = Date.now()
     ssb.publish({
-      type: 'project',
-      name: '',
-      symbol: null,
-      flagged: false,
-      team: [feed.id]
+      type: 'work-span',
+      project,
+      startTime: Math.floor(now / 1000 - 15 * 60),
+      endTime: Math.floor(now / 1000)
     }, cb)
   })
 }
@@ -188,4 +138,3 @@ function Source(ssb) {
     return deferred
   }
 }
-

@@ -5,6 +5,7 @@ module.exports = function(str, opts) {
   opts = opts || {}
   const {readOnly} = opts
   return h('input.string', {
+    classList: opts.classList || [],
     attributes: {
       readonly: computed(readOnly, readOnly => readOnly ? true : undefined),
       type: 'text',

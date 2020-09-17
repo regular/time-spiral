@@ -19,6 +19,7 @@
   "homepage": "https://github.com/regular/time-spiral#readme",
   "dependencies": {
     "collect-mutations": "^1.0.6",
+    "dayjs": "^1.8.36",
     "module-styles": "^1.0.0",
     "mutant": "^3.29.0",
     "obv": "0.0.1",
