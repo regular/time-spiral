@@ -1,3 +1,4 @@
+const fs = require('fs')
 const h = require('mutant/html-element')
 const MutantArray = require('mutant/array')
 const MutantMap = require('mutant/map')
@@ -21,7 +22,7 @@ const font= bricons.font({
 addFont(font)
 
 module.exports = function(ssb) {
-  const view = View(ssb, src())
+  const view = View(ssb, fs.readFileSync('./views/projects.js', 'utf8'))
   return {renderAddButton, renderList}
 
   function patch(kv, newContent, cb) {
@@ -137,22 +138,4 @@ function compareProjects(kva, kvb) {
   if (aname > bname) return 1
   if (kva.key < kvb.key) return -1
   return 1
-}
-
-
-function src() {
-  return `
-    module.exports = function(kvm) {
-      const {key, value, meta, seq} = kvm
-      const {content} = value
-
-      if (content.type !== 'project') return []
-      const team = content.team || []
-      return team.map(feedId =>
-        ['T', feedId]
-      ).concat(
-        ['N', content.name || '']
-      )
-    }
-  `
 }

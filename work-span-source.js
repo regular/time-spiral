@@ -1,10 +1,10 @@
-const Value = require('mutant/value')
+const fs = require('fs')
 const debug = require('debug')('tspl:work-spans-source')
 const revisionRoot = require('./util/revision-root')
 const View = require('./view')
 
 module.exports = function(ssb) {
-  const view = View(ssb, src())
+  const view = View(ssb, fs.readFileSync('./views/work-spans.js', 'utf8'))
 
   return function workSpans(spans, projectKvObs, feedIdObs, opts) {
     opts = opts || {}
@@ -34,19 +34,5 @@ module.exports = function(ssb) {
       })
     }
   }
-}
-
-function src() {
-  return `
-    module.exports = function(kvm) {
-      const {key, value, meta, seq} = kvm
-      const {author, content} = value
-      if (content.type !== 'work-span') return []
-      if (typeof content.project !== 'string' || typeof content.endTime !== 'number') return []
-      return [
-        [author, content.project, content.endTime]
-      ]
-    }
-  `
 }
 
