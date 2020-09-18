@@ -6,29 +6,36 @@ const MutantArray = require('mutant/array')
 const computed = require('mutant/computed')
 const styles = require('module-styles')('tspl-main')
 
+const Query = require('./query')
 const Projects = require('./projects')
 const WorkSpans = require('./work-spans')
 const renderGraph = require('./graph')
 const renderPalette = require('./render-palette')
 
 client((err, ssb, config) =>{
+  const {queryProjects, queryWorkSpans} = Query(ssb)
+  const projects = Projects(ssb)
+  const workSpans = WorkSpans(ssb)
+  
   const feedId = Value()
   const selectedProject = Value()
   const currentSpans = MutantArray()
   const currentProjects = MutantArray()
   
-  const projects = Projects(ssb)
-  const workSpans = WorkSpans(ssb)
-  
-  const abort = workSpans.query(currentSpans, feedId, null, {
+  const abort1 = queryWorkSpans(currentSpans, feedId, null, {
     minTime: Date.now()/1000 - 10 * 60 * 60 // 10hours
   })
+  const abort2 = queryProjects(currentProjects, feedId)
+
+  function abort() {
+    abort1()
+    abort2()
+  }
 
   ssb.whoami(ssb, (err, feed) =>{
     if (err) console.log(err)
     if (!feed.id) return
     feedId.set(feed.id)
-    projects.query(currentProjects, feed.id)
   })
 
   document.body.appendChild(h('.tspl-main', {

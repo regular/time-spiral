@@ -1,13 +1,25 @@
 const indexers = {
-  'work-span': indexWorkSpan
+  'work-span': indexWorkSpan,
+  'project': indexProject
 }
 
-function  indexWorkSpan(author, content) {
+function indexProject(author, content) {
+  const team = content.team || []
+  return team.map(feedId =>
+    // PM: project member
+    ['PM', feedId]
+  ).concat(
+    // PN: project name
+    ['PN', content.name || '']
+  )
+}
+
+function indexWorkSpan(author, content) {
   if (typeof content.project !== 'string' || typeof content.endTime !== 'number') return []
   const {project, endTime} = content
   return [
-    ['APE', author, project, endTime],
-    ['AE', author, endTime]
+    ['WAPE', author, project, endTime],
+    ['WAE', author, endTime]
   ]
 }
 

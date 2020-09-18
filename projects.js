@@ -8,7 +8,6 @@ const debug = require('debug')('tspl:projects')
 const input = require('./input')
 const revisionRoot = require('./util/revision-root')
 const Patch = require('./util/patch')
-const View = require('./view')
 
 const bricons = require('bricons')
 const addFont = require('./add-font')
@@ -22,9 +21,8 @@ addFont(bricons.font({
 }))
 
 module.exports = function(ssb) {
-  const view = View(ssb, fs.readFileSync('./views/projects.js', 'utf8'))
   const patch = Patch(ssb)
-  return {renderAddButton, renderList, query}
+  return {renderAddButton, renderList}
 
   function renderAddButton() {
     return h('button.add.project', {
@@ -32,15 +30,6 @@ module.exports = function(ssb) {
         if (err) return console.error(err.message)
         console.log('added project %o', kv)
       })
-    })
-  }
-
-  function query(results, feedId) {
-    const queryProjects = view(results)
-    debug('query list for %s', feedId)
-    return queryProjects({
-      gt: ['T', feedId],
-      lt: ['T', feedId, '~'] // undefined does not work here, it gets lost over muxrpc!
     })
   }
 

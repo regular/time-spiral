@@ -5,15 +5,13 @@ const computed = require('mutant/computed')
 const Value = require('mutant/value')
 const pull = require('pull-stream')
 const debug = require('debug')('tspl:work-spans')
-const WorkSpanSource = require('./work-span-source')
 const dayjs = require('dayjs').extend(require('dayjs/plugin/localizedFormat'))
 const revisionRoot = require('./util/revision-root')
 const Patch = require('./util/patch')
 
 module.exports = function(ssb) {
-  const query = WorkSpanSource(ssb)
   const patch = Patch(ssb)
-  return {renderAddButton, renderList, query}
+  return {renderAddButton, renderList}
 
   function renderAddButton(projectObs) {
     return h('button.add.span', {
