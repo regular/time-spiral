@@ -23,7 +23,7 @@ addFont(font)
 
 module.exports = function(ssb) {
   const view = View(ssb, fs.readFileSync('./views/projects.js', 'utf8'))
-  return {renderAddButton, renderList}
+  return {renderAddButton, renderList, view}
 
   function patch(kv, newContent, cb) {
     const revRoot = kv.value.content.revisionRoot || kv.key

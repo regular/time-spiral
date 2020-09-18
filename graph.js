@@ -20,7 +20,7 @@ setInterval(setTime, 1000/15)
 //setInterval(setTime, 100)
 setTime()
 
-module.exports = function(spans, opts) {
+module.exports = function(spans, projects, opts) {
   opts = opts || {}
   const selectedSpan = opts.selectedSpan || Value()
   return h('.time-spiral', [

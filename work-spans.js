@@ -34,10 +34,9 @@ module.exports = function(ssb) {
     })
   }
 
-  function renderSpanList(feedId, projectId, opts) {
+  function renderSpanList(feedId, projectId, projects, opts) {
     opts = opts || {}
     const spans = MutantArray()
-    const o = {sync: true, live: true}
     const abort = source(spans, projectId, feedId)
 
     return h('.work-span-list.list', {
@@ -47,14 +46,23 @@ module.exports = function(ssb) {
     }))
 
     function renderSpan(kv) {
-      debug('render %o', kv)
-      if (!kv) return []
-      const {content} = kv.value
-      const {startTime, endTime} = content
-      return [
-        h('.time', formatTime(startTime)),
-        h('.time', formatTime(endTime))
-      ]
+      return computed(projects, projects => {
+        debug('render %o', kv)
+        if (!kv) return []
+        const {content} = kv.value
+        const {project, startTime, endTime} = content
+
+        const projectKv = projects.find(kv=>revisionRoot(kv) == project)
+        if (!projectKv) {
+          console.warn('No project message found for %s in %o', project, projects)
+        }
+
+        return [
+          h('.time', formatTime(startTime)),
+          h('.time', formatTime(endTime)),
+          h('.project', projectKv && projectKv.value.content.name)
+        ]
+      })
     }
   }
 }
@@ -94,47 +102,3 @@ function compareProjects(kva, kvb) {
   return 1
 }
 
-function Source(ssb) {
-  const viewHandle = Obv()
-
-  const src = `
-    module.exports = function(kvm) {
-      const {key, value, meta, seq} = kvm
-      const {content} = value
-
-      if (content.type !== 'project') return []
-      const team = content.team || []
-      return team.map(feedId =>
-        ['T', feedId]
-      ).concat(
-        ['N', content.name || '']
-      )
-    }
-  `
-
-  ssb.sandviews.openView(src, (err, handle) => {
-    console.log(`openView returns: ${err} ${handle}`)
-    if (err) return viewHandle.set(err)
-    viewHandle.set(handle)
-  })
-
-  return function(feedId, opts) {
-    opts = opts || {}
-    const deferred = defer.source()
-    viewHandle.once( handle =>{
-      console.log(`viewHandle set to ${handle}`)
-      if (handle instanceof Error) return deferred.resolve(pull.error(handle))
-      if (!handle) return deferred.resolve(pull.error('now sandviews handle'))
-
-      debug('query list for %s', feedId)
-
-      deferred.resolve(
-        ssb.sandviews.read(handle, Object.assign({}, opts, {
-          gt: ['T', feedId],
-          lt: ['T', feedId, '~'] // undefined does not work here, it gets lost over muxrpc!
-        }))
-      )
-    })
-    return deferred
-  }
-}

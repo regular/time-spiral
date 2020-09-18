@@ -18,16 +18,23 @@ client((err, ssb, config) =>{
   const feedId = Value()
   const selectedProject = Value()
   const currentSpans = MutantArray()
-
-  ssb.whoami(ssb, (err, feed) =>{
-    if (err) console.log(err)
-    feedId.set(feed.id)
-  })
-
+  const currentProjects = MutantArray()
+  
   const abort = workSpanSource(currentSpans, selectedProject, feedId)
 
-  const {renderList, renderAddButton} = Projects(ssb)
+  const {renderList, renderAddButton, view} = Projects(ssb)
   const {renderSpanList, renderAddSpanButton} = WorkSpans(ssb)
+  const queryProjects = view(currentProjects)
+  
+  ssb.whoami(ssb, (err, feed) =>{
+    if (err) console.log(err)
+    if (!feed.id) return
+    feedId.set(feed.id)
+    queryProjects({
+      gt: ['T', feed.id],
+      lt: ['T', feed.id, '~'] // undefined does not work here, it gets lost over muxrpc!
+    })
+  })
 
   document.body.appendChild(h('.tspl-main', {
     hooks: [el=>abort]
@@ -36,9 +43,9 @@ client((err, ssb, config) =>{
       computed(feedId, feedId => feedId ? renderList(feedId, {selectedProject}) : h('.spinner', 'spinner')),
       renderAddButton(),
     ]),
-    renderGraph(currentSpans),
+    renderGraph(currentSpans, currentProjects),
     h('.hspl-rightbar', [
-      renderSpanList(feedId, selectedProject),
+      renderSpanList(feedId, selectedProject, currentProjects),
       renderAddSpanButton(selectedProject)
     ])
     //renderPalette(JSON.parse(fs.readFileSync('palettes/f94144-f3722c-f8961e-f9c74f-90be6d-43aa8b-577590.json')))
@@ -110,7 +117,7 @@ button:hover {
 .tspl-main .work-span-list {
   display: grid;
   column-gap: 1em;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr auto;
 }
 
 .tspl-main .project-list button.flag,
