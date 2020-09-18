@@ -13,20 +13,18 @@ const View = require('./view')
 const bricons = require('bricons')
 const addFont = require('./add-font')
 
-const font= bricons.font({
+addFont(bricons.font({
   fontName: 'iconfont',
   glyphs: {
     'F': 'ionicons/heart',
     'G': 'ionicons/settings'
   }
-})
-addFont(font)
+}))
 
 module.exports = function(ssb) {
   const view = View(ssb, fs.readFileSync('./views/projects.js', 'utf8'))
   const patch = Patch(ssb)
-  return {renderAddButton, renderList, view}
-
+  return {renderAddButton, renderList, query}
 
   function renderAddButton() {
     return h('button.add.project', {
@@ -37,24 +35,24 @@ module.exports = function(ssb) {
     })
   }
 
-  function renderList(feedId, opts) {
-    opts = opts || {}
-    const selectedProject = opts.selectedProject || Value()
-    const projects = MutantArray()
-    const query = view(projects)
-    
+  function query(results, feedId) {
+    const queryProjects = view(results)
     debug('query list for %s', feedId)
-    const abort = query({
+    return queryProjects({
       gt: ['T', feedId],
       lt: ['T', feedId, '~'] // undefined does not work here, it gets lost over muxrpc!
     })
+  }
+
+  function renderList(projects, opts) {
+    opts = opts || {}
+    const selectedProject = opts.selectedProject || Value()
 
     const sortedProjects = computed(projects, projects =>{
       return projects.sort(compareProjects)
     })
 
     return h('.project-list.list', {
-      hooks: [el=>abort], // abort pull stream when element is removed from dom
     }, MutantMap(sortedProjects, kvObs => {
       return computed(kvObs, kv => renderProject(kv))
     }))

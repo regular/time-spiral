@@ -1,52 +1,45 @@
 const fs = require('fs')
 const {client} = require('tre-client')
-const Projects = require('./projects')
 const h = require('mutant/html-element')
 const Value = require('mutant/value')
 const MutantArray = require('mutant/array')
 const computed = require('mutant/computed')
 const styles = require('module-styles')('tspl-main')
 
+const Projects = require('./projects')
+const WorkSpans = require('./work-spans')
 const renderGraph = require('./graph')
 const renderPalette = require('./render-palette')
-const WorkSpanSource = require('./work-span-source')
-const WorkSpans = require('./work-spans')
 
 client((err, ssb, config) =>{
-  const workSpanSource = WorkSpanSource(ssb)
-
   const feedId = Value()
   const selectedProject = Value()
   const currentSpans = MutantArray()
   const currentProjects = MutantArray()
   
-  const abort = workSpanSource(currentSpans, selectedProject, feedId)
-
-  const {renderList, renderAddButton, view} = Projects(ssb)
-  const {renderSpanList, renderAddSpanButton} = WorkSpans(ssb)
-  const queryProjects = view(currentProjects)
+  const projects = Projects(ssb)
+  const workSpans = WorkSpans(ssb)
   
+  const abort = workSpans.query(currentSpans, selectedProject, feedId)
+
   ssb.whoami(ssb, (err, feed) =>{
     if (err) console.log(err)
     if (!feed.id) return
     feedId.set(feed.id)
-    queryProjects({
-      gt: ['T', feed.id],
-      lt: ['T', feed.id, '~'] // undefined does not work here, it gets lost over muxrpc!
-    })
+    projects.query(currentProjects, feed.id)
   })
 
   document.body.appendChild(h('.tspl-main', {
     hooks: [el=>abort]
   }, [
     h('.hspl-sidebar', [
-      computed(feedId, feedId => feedId ? renderList(feedId, {selectedProject}) : h('.spinner', 'spinner')),
-      renderAddButton(),
+      projects.renderList(currentProjects, {selectedProject}),
+      projects.renderAddButton()
     ]),
     renderGraph(currentSpans, currentProjects),
     h('.hspl-rightbar', [
-      renderSpanList(feedId, selectedProject, currentProjects),
-      renderAddSpanButton(selectedProject)
+      workSpans.renderList(currentSpans, currentProjects),
+      workSpans.renderAddButton(selectedProject)
     ])
     //renderPalette(JSON.parse(fs.readFileSync('palettes/f94144-f3722c-f8961e-f9c74f-90be6d-43aa8b-577590.json')))
   ]))

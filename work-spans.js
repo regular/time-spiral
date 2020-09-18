@@ -11,11 +11,11 @@ const revisionRoot = require('./util/revision-root')
 const Patch = require('./util/patch')
 
 module.exports = function(ssb) {
-  const source = WorkSpanSource(ssb)
+  const query = WorkSpanSource(ssb)
   const patch = Patch(ssb)
-  return {renderAddSpanButton, renderSpanList}
+  return {renderAddButton, renderList, query}
 
-  function renderAddSpanButton(projectObs) {
+  function renderAddButton(projectObs) {
     return h('button.add.span', {
       'ev-click': ev => addSpan(ssb, revisionRoot(projectObs()), (err, kv) => {
         if (err) return console.error(err.message)
@@ -24,16 +24,14 @@ module.exports = function(ssb) {
     })
   }
 
-  function renderSpanList(feedId, projectId, projects, opts) {
+  function renderList(spans, projects, opts) {
     opts = opts || {}
-    const spans = MutantArray()
-    const abort = source(spans, projectId, feedId)
 
-    return h('.work-span-list.list', {
-      hooks: [el=>el=>abort()], // abort pull stream when element is removed from dom
-    }, MutantMap(spans, kvObs => {
-      return computed(kvObs, kv => renderSpan(kv))
-    }))
+    return h('.work-span-list.list', [
+      MutantMap(spans, kvObs => {
+        return computed(kvObs, kv => renderSpan(kv))
+      })
+    ])
 
     function renderSpan(kv) {
       return computed(projects, projects => {
