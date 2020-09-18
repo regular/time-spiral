@@ -8,22 +8,12 @@ const debug = require('debug')('tspl:work-spans')
 const WorkSpanSource = require('./work-span-source')
 const dayjs = require('dayjs').extend(require('dayjs/plugin/localizedFormat'))
 const revisionRoot = require('./util/revision-root')
+const Patch = require('./util/patch')
 
 module.exports = function(ssb) {
   const source = WorkSpanSource(ssb)
+  const patch = Patch(ssb)
   return {renderAddSpanButton, renderSpanList}
-
-  function patch(kv, newContent, cb) {
-    const revRoot = kv.value.content.revisionRoot || kv.key
-    ssb.revisions.getLatestRevision(revRoot, (err, kv) =>{
-      if (err) return cb(err)
-      const {content} = kv.value
-      Object.assign(content, newContent)
-      content.revisionRoot = revRoot
-      content.revisionBranch = kv.key
-      ssb.publish(content, cb)
-    })
-  }
 
   function renderAddSpanButton(projectObs) {
     return h('button.add.span', {

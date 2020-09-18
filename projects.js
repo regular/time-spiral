@@ -7,6 +7,7 @@ const Value = require('mutant/value')
 const debug = require('debug')('tspl:projects')
 const input = require('./input')
 const revisionRoot = require('./util/revision-root')
+const Patch = require('./util/patch')
 const View = require('./view')
 
 const bricons = require('bricons')
@@ -23,19 +24,9 @@ addFont(font)
 
 module.exports = function(ssb) {
   const view = View(ssb, fs.readFileSync('./views/projects.js', 'utf8'))
+  const patch = Patch(ssb)
   return {renderAddButton, renderList, view}
 
-  function patch(kv, newContent, cb) {
-    const revRoot = kv.value.content.revisionRoot || kv.key
-    ssb.revisions.getLatestRevision(revRoot, (err, kv) =>{
-      if (err) return cb(err)
-      const {content} = kv.value
-      Object.assign(content, newContent)
-      content.revisionRoot = revRoot
-      content.revisionBranch = kv.key
-      ssb.publish(content, cb)
-    })
-  }
 
   function renderAddButton() {
     return h('button.add.project', {
