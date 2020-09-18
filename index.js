@@ -20,7 +20,9 @@ client((err, ssb, config) =>{
   const projects = Projects(ssb)
   const workSpans = WorkSpans(ssb)
   
-  const abort = workSpans.query(currentSpans, selectedProject, feedId)
+  const abort = workSpans.query(currentSpans, feedId, null, {
+    minTime: Date.now()/1000 - 10 * 60 * 60 // 10hours
+  })
 
   ssb.whoami(ssb, (err, feed) =>{
     if (err) console.log(err)
