@@ -3,13 +3,10 @@ const MutantArray = require('mutant/array')
 const MutantMap = require('mutant/map')
 const computed = require('mutant/computed')
 const Value = require('mutant/value')
-const collect = require('collect-mutations')
-const pull = require('pull-stream')
-const defer = require('pull-defer')
-const Obv = require('obv')
 const debug = require('debug')('tspl:projects')
 const input = require('./input')
 const revisionRoot = require('./util/revision-root')
+const View = require('./view')
 
 const bricons = require('bricons')
 const addFont = require('./add-font')
@@ -24,7 +21,7 @@ const font= bricons.font({
 addFont(font)
 
 module.exports = function(ssb) {
-  const source = Source(ssb)
+  const view = View(ssb, src())
   return {renderAddButton, renderList}
 
   function patch(kv, newContent, cb) {
@@ -39,7 +36,6 @@ module.exports = function(ssb) {
     })
   }
 
-
   function renderAddButton() {
     return h('button.add.project', {
       'ev-click': ev => addProject(ssb, (err, kv) => {
@@ -53,25 +49,24 @@ module.exports = function(ssb) {
     opts = opts || {}
     const selectedProject = opts.selectedProject || Value()
     const projects = MutantArray()
-    const o = {sync: true, live: true}
-    let drain
-    pull(
-      source(feedId, o),
-      pull.through( kvv=>debug('source %o', kvv)),
-      drain = collect(projects, o, err =>{
-        console.error(err.message)
-      })
-    )
+    const query = view(projects)
+    
+    debug('query list for %s', feedId)
+    const abort = query({
+      gt: ['T', feedId],
+      lt: ['T', feedId, '~'] // undefined does not work here, it gets lost over muxrpc!
+    })
 
     const sortedProjects = computed(projects, projects =>{
       return projects.sort(compareProjects)
     })
 
     return h('.project-list.list', {
-      hooks: [el=>el=>drain.abort()], // abort pull stream when element is removed from dom
+      hooks: [el=>abort], // abort pull stream when element is removed from dom
     }, MutantMap(sortedProjects, kvObs => {
       return computed(kvObs, kv => renderProject(kv))
     }))
+
     function renderProject(kv) {
       debug('render %o', kv)
       if (!kv) return []
@@ -144,10 +139,9 @@ function compareProjects(kva, kvb) {
   return 1
 }
 
-function Source(ssb) {
-  const viewHandle = Obv()
 
-  const src = `
+function src() {
+  return `
     module.exports = function(kvm) {
       const {key, value, meta, seq} = kvm
       const {content} = value
@@ -161,31 +155,4 @@ function Source(ssb) {
       )
     }
   `
-
-  ssb.sandviews.openView(src, (err, handle) => {
-    console.log(`openView returns: ${err} ${handle}`)
-    if (err) return viewHandle.set(err)
-    viewHandle.set(handle)
-  })
-
-  return function(feedId, opts) {
-    opts = opts || {}
-    const deferred = defer.source()
-    viewHandle.once( handle =>{
-      console.log(`viewHandle set to ${handle}`)
-      if (handle instanceof Error) return deferred.resolve(pull.error(handle))
-      if (!handle) return deferred.resolve(pull.error('now sandviews handle'))
-
-      debug('query list for %s', feedId)
-
-      deferred.resolve(
-        ssb.sandviews.read(handle, Object.assign({}, opts, {
-          gt: ['T', feedId],
-          lt: ['T', feedId, '~'] // undefined does not work here, it gets lost over muxrpc!
-        }))
-      )
-    })
-    return deferred
-  }
 }
-
