@@ -2,7 +2,7 @@ const Obv = require('obv')
 const pull = require('pull-stream')
 const defer = require('pull-defer')
 const collect = require('collect-mutations')
-const debug = require('debug')('tspl:work-spans-source')
+const debug = require('debug')('tspl:view')
 
 /* Usage:
 const View = require('view')
@@ -22,8 +22,16 @@ module.exports = function View(ssb, src) {
       const o = Object.assign({}, opts, {live: true, sync: true})
       pull(
         source(o),
-        drain = collect(result, {live: true, sync: true})
+        drain = collect(result, {live: true, sync: true}, onEnd)
       )
+
+      function onEnd(err) {
+        debug('view query stream ended err: %s', err && err.message || 'null')
+        if (err.message == 'unexpected end of parent stream') {
+          debug('resuming')
+          setTimeout(()=>query(opts), 0)
+        }
+      }
       return function abort() {
         if (drain) drain.abort()
         drain = null

@@ -25,7 +25,7 @@
     "obv": "0.0.1",
     "pull-defer": "^0.2.3",
     "pull-stream": "^3.6.14",
-    "tre-client": "^3.1.0"
+    "tre-client": "git://github.com/regular/tre-client.git#experimental"
   },
   "devDependencies": {
     "brfs": "^2.0.2",
