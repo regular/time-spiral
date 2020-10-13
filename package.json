@@ -1,7 +1,7 @@
 {
   "name": "time-spiral",
   "version": "1.0.0",
-  "description": "",
+  "description": "time-tracking (a Bay-of-Plenty demo)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,16 +10,16 @@
     "type": "git",
     "url": "git+https://github.com/regular/time-spiral.git"
   },
-  "keywords": [],
+  "keywords": ["tre", "bay-of-plenty", "ssb", "time tracking"],
   "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
-  "license": "ISC",
+  "license": "AGPLv3",
   "bugs": {
     "url": "https://github.com/regular/time-spiral/issues"
   },
   "homepage": "https://github.com/regular/time-spiral#readme",
   "dependencies": {
     "collect-mutations": "^1.0.6",
-    "dayjs": "^1.8.36",
+    "dayjs": "^1.9.1",
     "module-styles": "^1.0.0",
     "mutant": "^3.29.0",
     "obv": "0.0.1",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "brfs": "^2.0.2",
-    "bricons": "^1.2.0",
+    "bricons": "^1.2.1",
     "browserify-swap": "^0.2.2",
     "sodium-browserify-tweetnacl": "^0.2.6"
   },
