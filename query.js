@@ -4,7 +4,7 @@ const revisionRoot = require('./util/revision-root')
 const View = require('./view')
 
 module.exports = function(ssb) {
-  const view = View(ssb, fs.readFileSync('./views/combined.js', 'utf8'))
+  const view = View(ssb, fs.readFileSync(__dirname + '/views/combined.js', 'utf8'))
   return {queryProjects, queryWorkSpans}
 
   function queryProjects(results, feedIdObs) {
