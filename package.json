@@ -10,7 +10,12 @@
     "type": "git",
     "url": "git+https://github.com/regular/time-spiral.git"
   },
-  "keywords": ["tre", "bay-of-plenty", "ssb", "time tracking"],
+  "keywords": [
+    "tre",
+    "bay-of-plenty",
+    "ssb",
+    "time tracking"
+  ],
   "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
   "license": "AGPLv3",
   "bugs": {
